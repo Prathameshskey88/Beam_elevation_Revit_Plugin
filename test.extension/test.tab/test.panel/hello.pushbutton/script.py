@@ -3,26 +3,22 @@
 __title__  = "List All Levels"
 __author__  = "Pratham"
 __doc__ = """Tool for level"""
-#____________________________________________________________________ IMPORTS
+
+#IMPORTS
 import operator
-from Autodesk.Revit.DB import (FilteredElementCollector,
-                               BuiltInCategory,
-                               UnitUtils)
-
-app   = __revit__.Application
-doc = __revit__.ActiveUIDocument.Document
-
-#⬇️ IMPORTSrr
+from Autodesk.Revit.DB import (FilteredElementCollector,BuiltInCategory,UnitUtils)
 from Autodesk.Revit.DB import *
 from pyrevit           import forms
 from System.Collections.Generic import List
 
-# #📦 VARIABLES
+#📦 VARIABLES
 uidoc = __revit__.ActiveUIDocument
 selection = uidoc.Selection
 doc   = __revit__.ActiveUIDocument.Document
+app   = __revit__.Application
 
-# FUNCTIONS
+
+# FUNCTIONS covertion of units need to shift this in library
 # def convert_internal_to_m(length):
 #     """Function to convert cm to feet."""
 #     rvt_year = int(app.VersionNumber)
@@ -38,12 +34,15 @@ doc   = __revit__.ActiveUIDocument.Document
 #         return UnitUtils.ConvertFromInternalUnits(length, UnitTypeId.Meters)
 
 def get_user_input():
-    '''PURPOSE:
-    INPUT:
-    OUTPUT: '''
+    '''PURPOSE: selection of beam
+    INPUT: selection of level, offset
+    OUTPUT: selection of beam with in the range given by user'''
     all_levels = FilteredElementCollector(doc).OfClass(Level).ToElements()
     dict_levels_by_name = {lvl.Name: lvl for lvl in all_levels}
     # dict_levels_by_elevation = {lvl.elevation: lvl.Elevation for lvl in all_levels}
+    #to use comboboxcomponent:
+    # User selects `Opt 1`, types 'Wood' in TextBox, and select Checkbox
+    # {'combobox1': 10.0, 'textbox1': 'Wood', 'checkbox': True}
     from rpw.ui.forms import (FlexForm, Label, ComboBox, TextBox, Separator, Button, CheckBox)
     components = [Label('Select Level:'),
             ComboBox('select_level',dict_levels_by_name),
@@ -57,25 +56,23 @@ def get_user_input():
     if not form.values:
         forms.alert("No Levels Selected.\n Please try again", exitscript=True)
     return form.values
-    # User selects `Opt 1`, types 'Wood' in TextBox, and select Checkbox
-# {'combobox1': 10.0, 'textbox1': 'Wood', 'checkbox': True}
+    
+# assigning inpute values:
 user_input = get_user_input()
 #create ui form for levels
 new_select_level=user_input['select_level']
 select_elevation=new_select_level.Elevation
 print(select_elevation)
+    # to make by defalut value:
     # if offset == None:
     #     offset = 5
     # else:
 offset = float(user_input['offset'])
 
-
-
-
+#selection of beams with in range:
 all_beams = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_StructuralFraming).WhereElementIsNotElementType().ToElements()
 to_select=[]
 k_select=[]
-s_select=[]
 for refer_beam in all_beams:
     print(refer_beam.Id,type(refer_beam))
     z_value=refer_beam.Location.Curve.GetEndPoint(0).Z
@@ -92,65 +89,4 @@ k_select=List[ElementId](k_select)
 print(k_select)
 uidoc.Selection.SetElementIds(k_select)
 
-# uidoc.Selection.SetElementIds(to_select)
 
-# # Refer_Level= INSTANCE_REFERENCE_LEVEL_PARAM
-
-
-# print(res) # Print Selected Item
-
-# for level in selected_levels:
-#     print(level)
-#
-#     t = Transaction(doc, 'temp')
-#     t.Start()
-#     element_ids = doc.Delete(level.Id)
-#
-#     # 3️⃣ RollBack so level is not deleted!
-#     t.RollBack()
-#
-#     # 4️⃣ Convert to Elements
-#     elements = [doc.GetElement(e_id) for e_id in element_ids]
-#
-#     # 5️⃣ Print Unique Types
-#     unique_types = {type(el) for el in elements}
-#     print('{} has {} Dependant Elements.'.format(level.Name, len(elements)))
-#     print('It includes {} unique Types'.format(len(unique_types)))
-#     for typ in unique_types:
-#         print(typ)
-#
-# all_levels = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Levels).WhereElementIsNotElementType().ToElements()
-#
-# selected_levels = forms.SelectFromList.show(all_levels,
-#                                 multiselect=True,
-#                                 name_attr='Name',
-#                                 button_name='Select Levels')
-# from pyrevit import forms
-# items = ['POSITIVE', '0', 'NEGATIVE']
-# res     = forms.SelectFromList.show(items,
-#                 multiselect=True,
-#                 button_name='Select Item')
-
-#____________________________________________________________________ MAIN
-# GET ALL LEVELS
-
-# levels = FilteredElementCollector(doc).OfCategory(BuiltInCategory.OST_Levels).WhereElementIsNotElementType().ToElements()
-#
-# # CONVERT UNITS TO METERS
-# dict_lvl = {}
-# for i in levels:
-#     # dict_lvl[i.Name] = convert_m_to_feet(i.Elevation)
-#     dict_lvl[i.Name] = convert_internal_to_m(i.Elevation)
-# # SORT BY ELEVATION
-# sorted_x = sorted(dict_lvl.items(), key=operator.itemgetter(1))
-
-# # PRINT LEVELS WITH ITS ELEVATIONS
-# for i in sorted_x[::-1]: #reversed order
-#     if i[1] > 0:
-#         print("+{}		{}".format(format(i[1], '.2f'), i[0]))
-#     elif i[1] < 0:
-#         print("{}		{}".format(format(i[1], '.2f'), i[0]))
-#     else:
-#         print("{}		{}".format("0.00", i[0]))
-
-# "05.04 - GetLevelDependantElements"
